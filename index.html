@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DropAlert | Track Price Drops by Email</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <meta
+    name="description"
+    content="Paste any product link and let DropAlert email you when the price drops to your target."
+  />
+  <style>
+    :root {
+      --bg: #eef4f7;
+      --surface: rgba(255, 255, 255, 0.88);
+      --surface-strong: #ffffff;
+      --text: #102132;
+      --muted: #587086;
+      --line: rgba(16, 33, 50, 0.12);
+      --primary: #0f6c81;
+      --primary-dark: #0b5465;
+      --accent: #f7b267;
+      --success-bg: #ecfdf3;
+      --success-text: #17603b;
+      --shadow: 0 30px 60px rgba(16, 33, 50, 0.12);
+      --radius-lg: 28px;
+      --radius-md: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(15, 108, 129, 0.18), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(247, 178, 103, 0.2), transparent 28%),
+        linear-gradient(180deg, #f8fbfd 0%, #eef4f7 100%);
+    }
+
+    .page {
+      position: relative;
+      overflow: hidden;
+      min-height: 100vh;
+      padding: 32px 20px 72px;
+    }
+
+    .page::before,
+    .page::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(10px);
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .page::before {
+      width: 300px;
+      height: 300px;
+      top: -80px;
+      right: -80px;
+      background: rgba(15, 108, 129, 0.14);
+    }
+
+    .page::after {
+      width: 220px;
+      height: 220px;
+      bottom: 10%;
+      left: -60px;
+      background: rgba(247, 178, 103, 0.18);
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-badge {
+      display: inline-grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary) 0%, #2d9ab0 100%);
+      color: #fff;
+      box-shadow: 0 14px 30px rgba(15, 108, 129, 0.25);
+      font-size: 1.1rem;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .hero-copy,
+    .hero-card {
+      background: var(--surface);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-copy {
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(15, 108, 129, 0.09);
+      color: var(--primary-dark);
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: clamp(2.6rem, 5vw, 5rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 34rem;
+      font-size: 1.12rem;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 34px;
+    }
+
+    .stat {
+      padding: 18px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(16, 33, 50, 0.06);
+    }
+
+    .stat strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 1.1rem;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .hero-card {
+      padding: 28px;
+      align-self: center;
+    }
+
+    .card-header {
+      margin-bottom: 22px;
+    }
+
+    .card-header h2 {
+      margin: 0 0 8px;
+      font-size: 1.4rem;
+      letter-spacing: -0.03em;
+    }
+
+    .card-header p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    form {
+      display: grid;
+      gap: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.94rem;
+      font-weight: 700;
+    }
+
+    .field {
+      width: 100%;
+      padding: 15px 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface-strong);
+      color: var(--text);
+      font: inherit;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .field:focus {
+      outline: none;
+      border-color: rgba(15, 108, 129, 0.5);
+      box-shadow: 0 0 0 4px rgba(15, 108, 129, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .button {
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 16px 18px;
+      background: linear-gradient(135deg, var(--primary) 0%, #148aa3 100%);
+      color: #fff;
+      font: inherit;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow: 0 18px 30px rgba(15, 108, 129, 0.22);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 36px rgba(15, 108, 129, 0.28);
+      filter: brightness(1.03);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .helper {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .message {
+      display: none;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .message.success {
+      display: block;
+      background: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid rgba(23, 96, 59, 0.15);
+    }
+
+    .message.error {
+      display: block;
+      background: #fff5f5;
+      color: #a53a3a;
+      border: 1px solid rgba(165, 58, 58, 0.15);
+    }
+
+    .fine-print {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.6;
+    }
+
+    .hidden-target {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy {
+        padding: 34px 26px;
+      }
+
+      .hero-card {
+        padding: 24px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 20px 16px 48px;
+      }
+
+      .topbar {
+        margin-bottom: 28px;
+      }
+
+      .input-row,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 2.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="container">
+      <header class="topbar">
+        <div class="brand" aria-label="DropAlert brand">
+          <span class="brand-badge">D</span>
+          <span>DropAlert</span>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">Track smarter. Buy lower.</div>
+          <h1>DropAlert</h1>
+          <p class="subtitle">Paste any product link. We email you when the price drops.</p>
+
+          <div class="stats" aria-label="Benefits">
+            <div class="stat">
+              <strong>Fast setup</strong>
+              <span>Add a product in under a minute.</span>
+            </div>
+            <div class="stat">
+              <strong>Daily checks</strong>
+              <span>GitHub Actions runs your tracker every day.</span>
+            </div>
+            <div class="stat">
+              <strong>Email alerts</strong>
+              <span>Get notified the moment it hits your price.</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <div class="card-header">
+            <h2>Start tracking a price</h2>
+            <p>Enter the product URL, your target price, and the email address that should receive the alert.</p>
+          </div>
+
+          <form id="dropAlertForm" method="POST" target="submitFrame" novalidate>
+            <div>
+              <label for="productUrl">Product URL</label>
+              <input
+                class="field"
+                id="productUrl"
+                name="productUrl"
+                type="url"
+                inputmode="url"
+                placeholder="https://example.com/product"
+                required
+              />
+            </div>
+
+            <div class="input-row">
+              <div>
+                <label for="targetPrice">Target Price</label>
+                <input
+                  class="field"
+                  id="targetPrice"
+                  name="targetPrice"
+                  type="number"
+                  inputmode="decimal"
+                  min="0"
+                  step="0.01"
+                  placeholder="49.99"
+                  required
+                />
+              </div>
+
+              <div>
+                <label for="email">Email Address</label>
+                <input
+                  class="field"
+                  id="email"
+                  name="email"
+                  type="email"
+                  inputmode="email"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <button class="button" type="submit">Track This Price</button>
+            <p class="helper">The form posts directly to your Google Apps Script web app, which stores the request in Google Sheets.</p>
+            <div id="formMessage" class="message" aria-live="polite"></div>
+          </form>
+
+          <p class="fine-print">
+            Replace <code>YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL</code> in the script below with your deployed web app URL before publishing.
+          </p>
+          <iframe class="hidden-target" name="submitFrame" title="Hidden form target"></iframe>
+        </aside>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoLlTkrqhQ3FDR6R6ovNw6Q0KhAQKd53FVcJRTdu5RqkfNwAKgbgmfswTWkAu1zh6r/exec";
+
+    const form = document.getElementById("dropAlertForm");
+    const message = document.getElementById("formMessage");
+
+    form.action = APPS_SCRIPT_URL;
+
+    form.addEventListener("submit", function (event) {
+      if (APPS_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+        event.preventDefault();
+        message.className = "message error";
+        message.textContent = "Add your Google Apps Script Web App URL in index.html before publishing this site.";
+        return;
+      }
+
+      if (!form.reportValidity()) {
+        event.preventDefault();
+        return;
+      }
+
+      message.className = "message success";
+      message.textContent = "We are tracking this! We will email you when the price drops.";
+      window.setTimeout(function () {
+        form.reset();
+      }, 150);
+    });
+  </script>
+</body>
+</html>
